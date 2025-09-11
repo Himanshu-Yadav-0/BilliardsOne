@@ -1,0 +1,35 @@
+import uuid
+from sqlalchemy.orm import Session
+from fastapi import HTTPException, status
+
+from app.models import models
+from app.schemas import cafe as cafe_schema
+
+def create_cafe(db: Session, cafe: cafe_schema.CafeCreate, owner_id: uuid.UUID):
+    db_cafe = models.Cafe(**cafe.model_dump(), owner_id=owner_id)
+    db.add(db_cafe)
+    db.commit()
+    db.refresh(db_cafe)
+    return db_cafe
+
+def get_cafes_by_owner(db: Session, owner_id: uuid.UUID):
+    return db.query(models.Cafe).filter(models.Cafe.owner_id == owner_id).all()
+
+def get_cafe_by_id(db: Session, cafe_id: uuid.UUID, owner_id: uuid.UUID):
+    db_cafe = db.query(models.Cafe).filter(models.Cafe.id == cafe_id, models.Cafe.owner_id == owner_id).first()
+    if not db_cafe:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Cafe not found")
+    return db_cafe
+
+def update_cafe(db: Session, cafe_id: uuid.UUID, cafe: cafe_schema.CafeUpdate, owner_id: uuid.UUID):
+    db_cafe = get_cafe_by_id(db, cafe_id, owner_id)
+    db_cafe.cafeName = cafe.cafeName
+    db.commit()
+    db.refresh(db_cafe)
+    return db_cafe
+
+def delete_cafe(db: Session, cafe_id: uuid.UUID, owner_id: uuid.UUID):
+    db_cafe = get_cafe_by_id(db, cafe_id, owner_id)
+    db.delete(db_cafe)
+    db.commit()
+    return {"message": "Cafe deleted successfully"}

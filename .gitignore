@@ -1,0 +1,83 @@
+# -------------------------------
+# Node / React (Frontend)
+# -------------------------------
+node_modules/
+dist/
+build/
+.vite/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Editor / OS specific
+.DS_Store
+Thumbs.db
+
+# Lock files (optional, keep if you want consistency)
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# -------------------------------
+# Python / FastAPI (Backend)
+# -------------------------------
+__pycache__/
+*.py[cod]
+*.egg
+*.egg-info/
+*.pyo
+*.pyd
+*.sqlite3
+*.db
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+.venv.bak/
+
+# Alembic / Migrations cache
+alembic.ini
+migrations/versions/*.pyc
+migrations/__pycache__/
+
+# Byte-compiled files
+*.so
+
+# Logs
+*.log
+*.out
+*.err
+
+# IDE / Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# -------------------------------
+# Supabase / Secrets
+# -------------------------------
+supabase/.temp/
+supabase/.branches/
+supabase/.history/
+.supabase/
+secrets.txt
+*.key
+*.pem
+
+# -------------------------------
+# Misc
+# -------------------------------
+coverage/
+.cache/
+pytest_cache/
+__pycache__
