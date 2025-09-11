@@ -1,8 +1,8 @@
 import axios from 'axios';
 
-const API_URL = 'http://10.79.44.88:8000/api/v1';
-// const API_URL = 'http://localhost:8000/api/v1';
-
+// const API_URL = 'http://10.79.44.88:8000/api/v1';
+// // const API_URL = 'http://localhost:8000/api/v1';
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 const apiClient = axios.create({
   baseURL: API_URL,
 });
