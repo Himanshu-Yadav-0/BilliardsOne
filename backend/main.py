@@ -6,7 +6,7 @@ from app.db.db import engine # Import engine
 
 # This command will create the tables if they don't exist.
 # Alembic is the preferred way for migrations, but this is good for initial setup.
-Base.metadata.create_all(bind=engine)
+# Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title="Billiards One API",
