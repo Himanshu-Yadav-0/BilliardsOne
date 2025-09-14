@@ -4,6 +4,7 @@ from app.api.v1.router import api_router
 from app.db.base import Base # Import Base
 from app.db.db import engine # Import engine
 
+Base.metadata.create_all(engine)
 # This command will create the tables if they don't exist.
 # Alembic is the preferred way for migrations, but this is good for initial setup.
 # Base.metadata.create_all(bind=engine)
@@ -24,8 +25,8 @@ origins = [
     # "http://127.0.0.1:8000/api/v1/auth/login"
     # Add your deployed frontend URL here when you go to production
     # "*"
-    "https://billiardsone.in",        # Aapka live domain
-    "https://www.billiardsone.in",    # "www" version
+    # "https://billiardsone.in",        # Aapka live domain
+    # "https://www.billiardsone.in",    # "www" version
 ]
 
 app.add_middleware(

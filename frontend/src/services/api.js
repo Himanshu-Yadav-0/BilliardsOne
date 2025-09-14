@@ -1,7 +1,5 @@
 import axios from 'axios';
 
-// const API_URL = 'http://10.79.44.88:8000/api/v1';
-// // const API_URL = 'http://localhost:8000/api/v1';
 const API_URL = import.meta.env.VITE_API_URL;
 const apiClient = axios.create({
   baseURL: API_URL,
@@ -34,6 +32,7 @@ export const loginUser = (credentials) => {
 // --- Owner: Cafe Management ---
 export const getOwnerCafes = () => apiClient.get('/owner/cafes/');
 export const createOwnerCafe = (cafeData) => apiClient.post('/owner/cafes/', cafeData);
+export const updateCafe = (cafeId, cafeData) => apiClient.put(`/owner/cafes/${cafeId}`, cafeData);
 
 // --- Owner: Staff Management ---
 export const getStaffForCafe = (cafeId) => apiClient.get('/owner/staff/', { params: { cafe_id: cafeId } });

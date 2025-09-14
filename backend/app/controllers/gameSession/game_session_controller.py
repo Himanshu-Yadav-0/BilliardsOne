@@ -5,6 +5,7 @@ import math
 from decimal import Decimal
 from app.models import models
 from app.schemas import game_session as game_session_schema
+from app.billing import strategies
 
 def start_new_session(db: Session, session_data: game_session_schema.SessionStart, staff: models.Staff):
     table = db.query(models.Table).filter(models.Table.id == session_data.table_id).first()
@@ -53,12 +54,17 @@ def end_existing_session(db: Session, session_id: str, staff: models.Staff):
     if not session or session.staff.cafe_id != staff.cafe_id:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Active session not found")
 
-    # --- NAYA PRO-RATA BILLING LOGIC ---
+    # --- Naya "Traffic Cop" Logic ---
+    
+    # 1. Basic details calculate karein
     session.endTime = datetime.now(timezone.utc)
     duration = session.endTime - session.startTime
     duration_minutes = math.ceil(duration.total_seconds() / 60)
 
     table = session.table
+    cafe = table.cafe
+    billing_strategy = cafe.billingStrategy # Cafe ki strategy fetch karein
+
     pricing_rule = db.query(models.Pricing).filter(
         models.Pricing.cafe_id == table.cafe_id,
         models.Pricing.tableType == table.tableType
@@ -67,53 +73,31 @@ def end_existing_session(db: Session, session_id: str, staff: models.Staff):
     if not pricing_rule:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Pricing for this table type is not set")
 
-    base_charge = Decimal('0.0')
-    extra_minutes_played = 0
-    per_minute_rate = Decimal(pricing_rule.hourPrice) / Decimal('60')
-    overtime_charge = Decimal('0.0')
-
-    if duration_minutes <= 30:
-        base_charge = Decimal(pricing_rule.halfHourPrice)
-    else:
-        base_charge = Decimal(pricing_rule.halfHourPrice)
-        extra_minutes_played = duration_minutes - 30
-        overtime_charge = extra_minutes_played * per_minute_rate
-
-    time_based_cost = base_charge + overtime_charge
-
     latest_player_change = db.query(models.PlayerChange).filter(
         models.PlayerChange.session_id == session.id
     ).order_by(models.PlayerChange.timestamp.desc()).first()
     
     final_player_count = latest_player_change.numberOfPlayers if latest_player_change else 0
-    
-    extra_player_cost = Decimal('0.0')
-    base_players_allowed = 2 # Assuming a base of 2 players
-    if final_player_count > base_players_allowed:
-        extra_players = final_player_count - base_players_allowed
-        extra_player_cost = extra_players * Decimal(pricing_rule.extraPlayerPrice)
 
-    total_amount_due = time_based_cost + extra_player_cost
+    # 2. Strategy ke hisaab se sahi calculation engine chunein
+    calculation_function = None
+    if billing_strategy == models.BillingStrategy.pro_rata:
+        calculation_function = strategies.calculate_pro_rata_bill
+    elif billing_strategy == models.BillingStrategy.per_minute:
+        calculation_function = strategies.calculate_per_minute_bill
+    elif billing_strategy == models.BillingStrategy.fixed_hour:
+        calculation_function = strategies.calculate_fixed_hour_bill
+    else:
+        raise HTTPException(status_code=500, detail="Unknown billing strategy configured for this cafe")
+
+    # 3. Chune hue engine se bill calculate karwayein
+    bill_details = calculation_function(duration_minutes, pricing_rule, final_player_count)
     
-    # Update table status back to "Available"
+    # Baaki updates waise ke waise
     table.status = models.TableStatus.available
-    
-    # Store final duration in the session for record-keeping
     session.timePlayedInMinutes = duration_minutes
-
     db.commit()
 
-    # Return a dictionary that matches the BillDetails schema in the Canvas
-    return {
-        "session_id": str(session.id),
-        "total_minutes_played": duration_minutes,
-        "base_charge": base_charge,
-        "extra_minutes_played": extra_minutes_played,
-        "per_minute_rate": per_minute_rate,
-        "overtime_charge": overtime_charge,
-        "time_based_cost": time_based_cost,
-        "final_player_count": final_player_count,
-        "extra_player_cost": extra_player_cost,
-        "total_amount_due": total_amount_due,
-    }
+    # Final response mein session_id add karke bhej dein
+    return {"session_id": str(session.id), **bill_details}
 

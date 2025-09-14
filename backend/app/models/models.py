@@ -18,6 +18,11 @@ class PaymentMethod(enum.Enum):
     cash = "Cash"
     online = "Online"
 
+class BillingStrategy(enum.Enum):
+    pro_rata = "Pro_Rata"
+    per_minute = "Per_Minute"
+    fixed_hour = "Fixed_Hour"
+
 class Owner(Base):
     __tablename__ = 'owners'
     id = Column(UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()"))
@@ -31,6 +36,7 @@ class Cafe(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()"))
     cafeName = Column(String, nullable=False)
     owner_id = Column(UUID(as_uuid=True), ForeignKey('owners.id'), nullable=False)
+    billingStrategy = Column(Enum(BillingStrategy), nullable=False, default=BillingStrategy.pro_rata)
     owner = relationship("Owner", back_populates="cafes")
     staff = relationship("Staff", back_populates="cafe", cascade="all, delete-orphan")
     tables = relationship("Table", back_populates="cafe", cascade="all, delete-orphan")

@@ -1,10 +1,12 @@
 import uuid
 from pydantic import BaseModel
+from app.models.models import BillingStrategy
 
 # --- Base Schema ---
 # Contains common attributes
 class CafeBase(BaseModel):
     cafeName: str
+    billingStrategy:BillingStrategy
 
 # --- Input Schemas ---
 # Used when creating a new cafe

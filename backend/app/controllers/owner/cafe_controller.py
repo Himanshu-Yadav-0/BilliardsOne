@@ -5,12 +5,21 @@ from fastapi import HTTPException, status
 from app.models import models
 from app.schemas import cafe as cafe_schema
 
-def create_cafe(db: Session, cafe: cafe_schema.CafeCreate, owner_id: uuid.UUID):
-    db_cafe = models.Cafe(**cafe.model_dump(), owner_id=owner_id)
-    db.add(db_cafe)
+def create_cafe(db: Session, cafe: cafe_schema.CafeCreate, owner_id: str):
+    """
+    Creates a new cafe for an owner and saves their chosen billing strategy.
+    """
+    # Create a new Cafe database model instance from the Pydantic schema
+    # Yeh Pydantic model ke saare matching fields ko directly database model mein daal dega
+    new_cafe = models.Cafe(
+        **cafe.model_dump(), 
+        owner_id=owner_id
+    )
+    
+    db.add(new_cafe)
     db.commit()
-    db.refresh(db_cafe)
-    return db_cafe
+    db.refresh(new_cafe)
+    return new_cafe
 
 def get_cafes_by_owner(db: Session, owner_id: uuid.UUID):
     return db.query(models.Cafe).filter(models.Cafe.owner_id == owner_id).all()
