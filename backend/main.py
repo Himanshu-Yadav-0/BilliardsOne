@@ -20,13 +20,13 @@ app = FastAPI(
 # It defines which frontend URLs are allowed to make requests to the backend.
 
 origins = [
-    "http://localhost:5173", # Default for Vite + React
-    "http://10.79.44.88:5173",
+    # "http://localhost:5173", # Default for Vite + React
+    # "http://10.79.44.88:5173",
     # "http://127.0.0.1:8000/api/v1/auth/login"
     # Add your deployed frontend URL here when you go to production
     # "*"
-    # "https://billiardsone.in",        # Aapka live domain
-    # "https://www.billiardsone.in",    # "www" version
+    "https://billiardsone.in",        # Aapka live domain
+    "https://www.billiardsone.in",    # "www" version
 ]
 
 app.add_middleware(
