@@ -2,15 +2,20 @@ from sqlalchemy.orm import Session
 from datetime import datetime, timezone
 from app.models import models
 
-def get_staff_dashboard_data(db: Session, staff: models.Staff):
-    """
-    Gathers all necessary data for the staff dashboard, including tables and pricing rules.
-    """
-    cafe = staff.cafe
-    tables = db.query(models.Table).filter(models.Table.cafe_id == staff.cafe_id).order_by(models.Table.tableName).all()
-    
-    # Fetch the pricing rules for the staff's cafe
-    pricing_rules = db.query(models.Pricing).filter(models.Pricing.cafe_id == staff.cafe_id).all()
+def get_staff_dashboard_data(db: Session, staff: models.Staff): # Yahaan 'staff' object ek Owner bhi ho sakta hai
+    # --- NAYA, CORRECTED LOGIC ---
+    # Hum pehle check karenge ki 'staff' object ke paas .cafe attribute hai ya nahi,
+    # jo hamare dependency ne add kiya tha.
+    if hasattr(staff, 'cafe') and staff.cafe is not None:
+        cafe = staff.cafe
+        cafe_id = cafe.id
+    else:
+        # Agar yeh ek normal staff member hai, toh uski default properties use karein
+        cafe = staff.cafe
+        cafe_id = staff.cafe_id
+
+    tables = db.query(models.Table).filter(models.Table.cafe_id == cafe_id).order_by(models.Table.tableName).all()
+    pricing_rules = db.query(models.Pricing).filter(models.Pricing.cafe_id == cafe_id).all()
 
     table_statuses = []
     for table in tables:
@@ -44,9 +49,9 @@ def get_staff_dashboard_data(db: Session, staff: models.Staff):
         
         table_statuses.append(status_info)
 
-    # Return the final structure, now including the pricing rules
     return {
         "cafeName": cafe.cafeName, 
         "tables": table_statuses,
         "pricing_rules": pricing_rules
     }
+

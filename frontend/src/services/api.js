@@ -59,6 +59,9 @@ export const getOwnerAnalytics = (cafeId, period) => {
   return apiClient.get(`/analytics/owner/${cafeId}`, { params: { period } });
 };
 
+export const assumeStaffRole = (cafeId) => {
+  return apiClient.post(`/auth/assume-role/${cafeId}`);
+};
 
 // --- Staff Workflow ---
 

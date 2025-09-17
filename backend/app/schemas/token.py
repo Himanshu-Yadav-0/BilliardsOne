@@ -9,6 +9,8 @@ class Role(str, enum.Enum):
 class TokenData(BaseModel):
     mobileNo: Optional[str] = None
     role: Optional[Role] = None
+    is_owner: Optional[bool] = False
+    cafe_id: Optional[str] = None 
 
 class Token(BaseModel):
     access_token: str

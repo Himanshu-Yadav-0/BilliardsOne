@@ -26,41 +26,65 @@ def register_owner(db: Session, owner: auth_schema.OwnerCreate):
 
 
 def login_for_access_token(db: Session, form_data: auth_schema.OAuth2PasswordRequestForm):
-    # The username is the mobile number
     mobile_no = form_data.username
     
-    # First, check if the user is an owner
     user = db.query(models.Owner).filter(models.Owner.mobileNo == mobile_no).first()
     role = "owner"
+    pin_hash_to_check = user.pinHash if user else None
     
-    # If not an owner, check if they are a staff member
     if not user:
         user = db.query(models.Staff).filter(models.Staff.mobileNo == mobile_no).first()
         role = "staff"
-        if user==None:
-            raise HTTPException(
-                status_code = status.HTTP_404_NOT_FOUND,
-            detail="No user Exists, Please Register Yourself",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-        pin = user.pin
-    else:
-        pin = user.pinHash
+        pin_hash_to_check = user.pin if user else None
 
-    # If user is not found in either table, or password doesn't match
-    if not user or not Hasher.verify_password(form_data.password, pin):
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found. Please register as an owner first.",
+        )
+
+    if not Hasher.verify_password(form_data.password, pin_hash_to_check):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect mobile number or PIN",
+            detail="The PIN you entered is incorrect.",
             headers={"WWW-Authenticate": "Bearer"},
         )
     
-    # Create the token with the correct role included in the payload
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
         data={"sub": user.mobileNo, "role": role}, 
         expires_delta=access_token_expires
     )
     
-    return {"access_token": access_token, "token_type": "bearer", "role":role}
+    # Also add role to the response here for consistency
+    return {"access_token": access_token, "token_type": "bearer", "role": role}
+
+def assume_staff_role(db: Session, cafe_id: str, owner: models.Owner):
+    cafe = db.query(models.Cafe).filter(
+        models.Cafe.id == cafe_id,
+        models.Cafe.owner_id == owner.id
+    ).first()
+
+    if not cafe:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Cafe not found or not owned by you")
+
+    access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    
+    # --- Yahaan Hai Magic ---
+    # Hum token ke data mein 'cafe_id' bhi add kar rahe hain
+    access_token = create_access_token(
+        data={
+            "sub": owner.mobileNo, 
+            "role": "staff", 
+            "is_owner": True,
+            "cafe_id": str(cafe.id) # Gate Number
+        }, 
+        expires_delta=access_token_expires
+    )
+    
+    return {"access_token": access_token, "token_type": "bearer", "role": "staff"}
+
+
+
+
 

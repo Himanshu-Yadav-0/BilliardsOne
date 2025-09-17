@@ -5,6 +5,8 @@ from app.db.db import get_db
 from app.schemas import auth as auth_schema
 from app.schemas import token as token_schema
 from app.controllers.auth import auth as auth_controller
+from app.models import models
+from app.security.dependencies import get_current_owner
 
 router = APIRouter()
 
@@ -23,3 +25,14 @@ def login_for_access_token(
 ):
     # Pass the form_data directly to the controller
     return auth_controller.login_for_access_token(db=db, form_data=form_data)
+
+@router.post("/assume-role/{cafe_id}", response_model=token_schema.Token)
+def switch_to_staff_view(
+    cafe_id: str,
+    db: Session = Depends(get_db),
+    current_owner: models.Owner = Depends(get_current_owner)
+):
+    """
+    Allows a verified owner to get a temporary staff token for one of their cafes.
+    """
+    return auth_controller.assume_staff_role(db=db, cafe_id=cafe_id, owner=current_owner)
