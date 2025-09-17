@@ -1,18 +1,11 @@
 import enum
-from pydantic import BaseModel
-
+from pydantic import BaseModel,Field
+from typing import Optional
 # --- Input Schemas ---
 class OwnerCreate(BaseModel):
     ownerName: str
-    mobileNo: str
-    pin: str
-from pydantic import BaseModel
-from typing import Optional
-
-class OwnerCreate(BaseModel):
-    ownerName: str
-    mobileNo: str
-    pin: str
+    mobileNo: str = Field(..., pattern=r"^[6-9]\d{9}$", description="Must be a valid 10-digit Indian mobile number")
+    pin: str = Field(..., min_length=6, max_length=6, pattern=r"^\d{6}$", description="Must be a 6-digit numeric PIN")
 
 # This class is a Pydantic model to represent the data
 # that FastAPI's OAuth2PasswordRequestForm expects.

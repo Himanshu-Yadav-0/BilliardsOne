@@ -3,24 +3,21 @@ import { useAuth } from '../context/AuthContext';
 import { registerOwner, loginUser } from '../services/api';
 
 const LoginPage = () => {
-  // State for toggling between Login and Register views
   const [isRegisterView, setIsRegisterView] = useState(false);
-  
-  // State for form fields
   const [mobileNo, setMobileNo] = useState('');
   const [pin, setPin] = useState('');
   const [ownerName, setOwnerName] = useState('');
-  
-  // State for UI feedback
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  
-  // Get the login function from our AuthContext
+
   const { login } = useAuth();
 
   const getErrorMessage = (err) => {
-    console.error("API Error Response:", err.response);
-    const detail = err.response?.data?.detail;
+    console.error("Full API Error Object:", err.response);
+    if (!err.response) {
+      return "Network error. Please check your connection and the API server.";
+    }
+    const detail = err.response.data?.detail;
     if (detail) {
       if (typeof detail === 'string') return detail;
       if (Array.isArray(detail) && detail.length > 0) return detail[0].msg || 'Invalid input.';
@@ -28,15 +25,38 @@ const LoginPage = () => {
     return 'An unexpected error occurred. Please try again.';
   };
 
+  // --- Nayi Client-Side Validation Logic ---
+  const validateInputs = () => {
+    const mobileRegex = /^[6-9]\d{9}$/;
+    const pinRegex = /^\d{6}$/;
+
+    if (!mobileRegex.test(mobileNo)) {
+      setError("Please enter a valid 10-digit mobile number.");
+      return false;
+    }
+    if (!pinRegex.test(pin)) {
+      setError("PIN must be a 6-digit number.");
+      return false;
+    }
+    // Agar register kar rahe hain, toh owner ka naam bhi check karein
+    if (isRegisterView && ownerName.trim() === '') {
+        setError("Owner name cannot be empty.");
+        return false;
+    }
+    return true;
+  };
+
   const handleRegisterSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
     setError('');
+    // API call se pehle inputs validate karein
+    if (!validateInputs()) {
+      return;
+    }
+    setLoading(true);
     try {
       await registerOwner({ ownerName, mobileNo, pin });
-      // On success, automatically switch to the login view
       setIsRegisterView(false);
-      // Clear fields for a better user experience
       setOwnerName('');
       setMobileNo('');
       setPin('');
@@ -49,12 +69,15 @@ const LoginPage = () => {
 
   const handleLoginSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
     setError('');
+    // API call se pehle inputs validate karein
+    if (!validateInputs()) {
+      return;
+    }
+    setLoading(true);
     try {
       const response = await loginUser({ mobileNo, pin });
       if (response.data && response.data.access_token) {
-        // Call the login function from our context to update the global state
         login(response.data.access_token);
       } else {
         setError('Login failed to return a valid token.');
@@ -77,29 +100,58 @@ const LoginPage = () => {
           <h2 className="text-2xl font-bold text-center text-white mb-6">
             {isRegisterView ? 'Owner Registration' : 'Welcome Back'}
           </h2>
-          <form onSubmit={isRegisterView ? handleRegisterSubmit : handleLoginSubmit} className="space-y-6">
+          {/* Form mein 'noValidate' add karein taaki browser ki default validation band ho jaaye */}
+          <form onSubmit={isRegisterView ? handleRegisterSubmit : handleLoginSubmit} className="space-y-6" noValidate>
             {isRegisterView && (
               <div>
                 <label htmlFor="ownerName" className="text-sm font-medium text-gray-300 block mb-2">Owner Name</label>
-                <input type="text" id="ownerName" value={ownerName} onChange={(e) => setOwnerName(e.target.value)} className="w-full px-4 py-2 text-white bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" required />
+                <input type="text" id="ownerName" value={ownerName} onChange={(e) => setOwnerName(e.target.value)} className="w-full px-4 py-2 text-white bg-gray-700 rounded-md" required />
               </div>
             )}
+            
             <div>
-              <label htmlFor="mobileNo" className="text-sm font-medium text-gray-300 block mb-2">Mobile Number</label>
-              <input type="tel" id="mobileNo" value={mobileNo} onChange={(e) => setMobileNo(e.target.value)} className="w-full px-4 py-2 text-white bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" required />
+              <label htmlFor="mobileNo" className="text-sm font-medium text-gray-300 block mb-2">
+                Mobile Number
+              </label>
+              <input
+                type="tel"
+                id="mobileNo"
+                value={mobileNo}
+                onChange={(e) => setMobileNo(e.target.value)}
+                className="w-full px-4 py-2 text-white bg-gray-700 rounded-md"
+                required
+                maxLength="10"
+              />
             </div>
+
             <div>
-              <label htmlFor="pin" className="text-sm font-medium text-gray-300 block mb-2">PIN</label>
-              <input type="password" id="pin" value={pin} onChange={(e) => setPin(e.target.value)} className="w-full px-4 py-2 text-white bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" required />
+              <label htmlFor="pin" className="text-sm font-medium text-gray-300 block mb-2">
+                PIN
+              </label>
+              <input
+                type="password"
+                id="pin"
+                inputMode="numeric" 
+                value={pin}
+                onChange={(e) => setPin(e.target.value)}
+                className="w-full px-4 py-2 text-white bg-gray-700 rounded-md"
+                required
+                maxLength="6"
+              />
             </div>
+
             {error && (<div className="text-red-400 text-sm text-center">{error}</div>)}
-            <button type="submit" disabled={loading} className="w-full py-3 px-4 font-semibold text-white bg-indigo-600 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-indigo-500 transition-colors duration-300 disabled:bg-indigo-400 disabled:cursor-not-allowed">
+            <button type="submit" disabled={loading} className="w-full py-3 px-4 font-semibold text-white bg-indigo-600 rounded-md hover:bg-indigo-700">
               {loading ? 'Processing...' : (isRegisterView ? 'Register' : 'Login')}
             </button>
           </form>
+
           <p className="text-center text-sm text-gray-400 mt-6">
             {isRegisterView ? 'Already have an account?' : "Don't have an account?"}{' '}
-            <button onClick={() => { setIsRegisterView(!isRegisterView); setError(''); }} className="font-medium text-indigo-400 hover:underline focus:outline-none">
+            <button
+              onClick={() => { setIsRegisterView(!isRegisterView); setError(''); }}
+              className="font-medium text-indigo-400 hover:underline"
+            >
               {isRegisterView ? 'Login' : 'Register Here'}
             </button>
           </p>
