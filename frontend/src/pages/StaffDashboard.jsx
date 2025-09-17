@@ -6,13 +6,12 @@ import SessionModal from '../components/SessionModal';
 import Toast from '../components/Toast';
 import LiveTimer from '../components/LiveTimer';
 
-// --- SVG Icon Components ---
+// --- SVG Icon Components (no changes) ---
 const TableIcon = ({ className }) => (<svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>);
 const PaymentIcon = ({ className }) => (<svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" /></svg>);
 const AnalyticsIcon = ({ className }) => (<svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>);
 
 const StaffDashboard = () => {
-  // logout ke saath-saath switchBackToOwner function bhi lein
   const { user, logout, switchBackToOwner } = useAuth();
   const navigate = useNavigate();
   
@@ -52,10 +51,8 @@ const StaffDashboard = () => {
     navigate('/login');
   };
   
-  // "Switch Back" ke liye naya handler
   const handleSwitchBack = () => {
     switchBackToOwner();
-    // App.jsx ka router automatically owner dashboard pe bhej dega
   };
 
   const showToast = (message, type = 'success') => {
@@ -69,28 +66,17 @@ const StaffDashboard = () => {
           <div>
             <h1 className="text-2xl font-bold text-white">{dashboardData.cafeName || 'Loading...'}</h1>
             <p className="text-sm text-gray-400">
-              {/* Ab hum dikhayenge ki owner as a staff act kar raha hai */}
               {user?.is_owner ? `Acting as Staff (Owner: ${user.mobileNo})` : `Staff: ${user?.mobileNo}`}
             </p>
           </div>
           
-          {/* --- Naya, Dynamic Button Logic --- */}
-          <div className="flex items-center space-x-2">
-            {user?.is_owner && (
-              <button 
-                onClick={handleSwitchBack} 
-                className="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg"
-              >
-                Switch to Owner
-              </button>
-            )}
-            <button 
-              onClick={handleLogout} 
-              className="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg"
-            >
-              Logout
-            </button>
-          </div>
+          {/* Header mein ab sirf Logout button rahega */}
+          <button 
+            onClick={handleLogout} 
+            className="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg"
+          >
+            Logout
+          </button>
         </div>
       </header>
 
@@ -99,6 +85,19 @@ const StaffDashboard = () => {
         {error && <p className="text-center text-red-400">{error}</p>}
         {!loading && !error && (
           <>
+            {/* --- Naya, Clean "Switch Back" Banner --- */}
+            {user?.is_owner && (
+              <div className="bg-green-800 border border-green-600 text-white p-3 rounded-lg mb-6 flex items-center justify-between">
+                <p className="font-semibold">You are viewing this dashboard as a staff member.</p>
+                <button
+                  onClick={handleSwitchBack}
+                  className="bg-green-700 hover:bg-green-500 text-white font-bold py-2 px-4 rounded-lg"
+                >
+                  Switch Back to Owner View
+                </button>
+              </div>
+            )}
+
             <div className="mb-6 bg-gray-800 p-4 rounded-lg">
               <h2 className="text-lg font-bold text-indigo-400 mb-2">Rate Card</h2>
               <div className="flex flex-col md:flex-row md:space-x-6 space-y-2 md:space-y-0 text-sm text-gray-300">

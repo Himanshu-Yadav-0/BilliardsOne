@@ -89,7 +89,7 @@ const CafesTab = ({ initialCafes, onCafeAdded }) => {
                   </button>
                   <button
                     onClick={() => handleSwitchToStaff(cafe.id)}
-                    className="text-sm bg-blue-600 hover:bg-blue-500 text-white font-semibold py-1 px-3 rounded-lg"
+                    className="text-sm bg-green-700 hover:bg-green-500 text-white font-semibold py-1 px-3 rounded-lg"
                   >
                     Act as Staff
                   </button>
