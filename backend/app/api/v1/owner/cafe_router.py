@@ -20,7 +20,7 @@ def create_new_cafe(
     """
     Create a new cafe for the currently authenticated owner.
     """
-    return cafe_controller.create_cafe(db=db, cafe=cafe, owner_id=current_owner.id)
+    return cafe_controller.create_cafe(db=db, cafe=cafe, owner=current_owner)
 
 @router.get("/", response_model=List[cafe_schema.Cafe])
 def read_owner_cafes(
