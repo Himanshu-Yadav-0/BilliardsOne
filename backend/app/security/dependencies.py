@@ -27,7 +27,6 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
             raise credentials_exception
         
         role = Role(role_str)
-        # TokenData schema mein cafe_id bhi pass karein taaki aage use ho sake
         token_data = TokenData(
             mobileNo=mobileNo, 
             role=role, 
@@ -42,8 +41,6 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
     if token_data.role == Role.owner:
         user = db.query(models.Owner).filter(models.Owner.mobileNo == token_data.mobileNo).first()
     elif token_data.role == Role.staff:
-        # Jab owner staff act kar raha ho, tab bhi hum Owner object hi fetch karenge,
-        # kyunki humein uski original details (name, pinHash) chahiye
         if token_data.is_owner:
             user = db.query(models.Owner).filter(models.Owner.mobileNo == token_data.mobileNo).first()
         else: 
@@ -74,10 +71,9 @@ def get_current_staff(user_data = Depends(get_current_user), db: Session = Depen
     
     # Agar owner as a staff act kar raha hai
     if token_data.is_owner:
-        # Pehle, owner ka "primary staff" profile dhoondne ki koshish karein
+        # Hamesha owner ka primary staff profile hi dhoondein (mobileNo se)
         owner_staff_profile = db.query(models.Staff).filter(
-            models.Staff.mobileNo == user.mobileNo,
-            models.Staff.cafe_id == token_data.cafe_id
+            models.Staff.mobileNo == user.mobileNo
         ).first()
         
         # Agar profile nahi milti (purana cafe)
@@ -86,17 +82,22 @@ def get_current_staff(user_data = Depends(get_current_user), db: Session = Depen
             owner_as_staff = models.Staff(
                 staffName=f"{user.ownerName} (Owner)",
                 mobileNo=user.mobileNo,
-                pin=user.pinHash, # Owner ka hashed pin use karein
+                pin=user.pinHash,
                 cafe_id=token_data.cafe_id
             )
             db.add(owner_as_staff)
             db.commit()
             db.refresh(owner_as_staff)
-            return owner_as_staff # Naya banaya hua profile return karein
+            return owner_as_staff
 
-        # Agar profile mil jaati hai
+        # Sabse important step: Sahi cafe ko dynamically attach karein
+        if token_data.cafe_id:
+            cafe_to_act_in = db.query(models.Cafe).filter(models.Cafe.id == token_data.cafe_id).first()
+            if cafe_to_act_in:
+                # Staff object ke cafe ko overwrite karein
+                owner_staff_profile.cafe = cafe_to_act_in
+        
         return owner_staff_profile
     
     # Agar normal staff hai, toh user (jo pehle se Staff object hai) return hoga
     return user
-

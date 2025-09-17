@@ -5,28 +5,34 @@ from fastapi import HTTPException, status
 from app.models import models
 from app.schemas import cafe as cafe_schema
 
+
 def create_cafe(db: Session, cafe: cafe_schema.CafeCreate, owner: models.Owner):
-    # Naya cafe banayein
     new_cafe = models.Cafe(
         cafeName=cafe.cafeName,
         billingStrategy=cafe.billingStrategy,
         owner_id=owner.id
     )
     db.add(new_cafe)
-    db.flush() # Taaki new_cafe ko ID mil jaaye
+    db.flush()
 
-    # --- Naya Logic: Har naye cafe ke saath owner ka "Primary Staff" profile banayein ---
-    owner_as_staff = models.Staff(
-        staffName=f"{owner.ownerName} (Owner)",
-        mobileNo=owner.mobileNo,
-        pin=owner.pinHash, # Owner ka hashed pin hi as a password use karein
-        cafe_id=new_cafe.id
-    )
-    db.add(owner_as_staff)
+    # --- Naya, Smart Logic ---
+    # Check karein ki is owner ka primary staff profile pehle se hai ya nahi
+    existing_staff_profile = db.query(models.Staff).filter(models.Staff.mobileNo == owner.mobileNo).first()
+    
+    # Sirf tabhi banayein jab pehle se na ho (yaani, yeh owner ka pehla cafe hai)
+    if not existing_staff_profile:
+        owner_as_staff = models.Staff(
+            staffName=f"{owner.ownerName} (Owner)",
+            mobileNo=owner.mobileNo,
+            pin=owner.pinHash,
+            cafe_id=new_cafe.id # Yeh uske pehle cafe se link ho jayega
+        )
+        db.add(owner_as_staff)
     
     db.commit()
     db.refresh(new_cafe)
     return new_cafe
+
 
 def get_cafes_by_owner(db: Session, owner_id: uuid.UUID):
     return db.query(models.Cafe).filter(models.Cafe.owner_id == owner_id).all()
