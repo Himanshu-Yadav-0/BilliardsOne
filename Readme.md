@@ -1,6 +1,3 @@
-Perfect 👌 here’s the **entire README as a single `.md` file** (copy-paste ready). I’ve kept proper markdown syntax throughout, so you can directly use it as your `README.md`.
-
-````markdown
 # 🎱 BilliardsOne – Modern Billiards Cafe Management App  
 
 BilliardsOne is a **full-stack web application** designed to modernize and streamline the operations of pool and billiards cafes.  
