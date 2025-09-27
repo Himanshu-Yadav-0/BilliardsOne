@@ -2,23 +2,18 @@ import React, { useState, useEffect } from 'react';
 import { getStaffForCafe, addStaffToCafe } from '../../services/api';
 
 const StaffTab = ({ cafes }) => {
-    // State to keep track of which cafe is selected in the dropdown
     const [selectedCafe, setSelectedCafe] = useState(cafes[0]?.id || '');
-    
-    // State for the list of staff, loading indicators, and errors
     const [staff, setStaff] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
-    // State for the "Add New Staff" form fields
     const [staffName, setStaffName] = useState('');
     const [mobileNo, setMobileNo] = useState('');
     const [pin, setPin] = useState('');
 
-    // This function fetches the staff list from the backend for the selected cafe
     const fetchStaff = async () => {
         if (!selectedCafe) {
-            setStaff([]); // Clear staff list if no cafe is selected
+            setStaff([]);
             return;
         };
         setLoading(true);
@@ -34,15 +29,39 @@ const StaffTab = ({ cafes }) => {
         }
     };
 
-    // This useEffect hook runs the fetchStaff function whenever the selectedCafe changes
     useEffect(() => {
         fetchStaff();
     }, [selectedCafe]);
 
-    // This handler is called when the "Add New Staff" form is submitted
+    // ✅ Input validation function for staff add
+    const validateStaffInputs = () => {
+        const mobileRegex = /^[6-9]\d{9}$/;  // starts 6-9, total 10 digits
+        const pinRegex = /^\d{6}$/;          // exactly 6 digits
+
+        if (staffName.trim() === '') {
+            setError("Staff name cannot be empty.");
+            return false;
+        }
+        if (!mobileRegex.test(mobileNo)) {
+            setError("Please enter a valid 10-digit mobile number.");
+            return false;
+        }
+        if (!pinRegex.test(pin)) {
+            setError("PIN must be a 6-digit number.");
+            return false;
+        }
+        return true;
+    };
+
     const handleAddStaff = async (e) => {
         e.preventDefault();
         setError('');
+
+        // 🔍 Validate before API call
+        if (!validateStaffInputs()) {
+            return;
+        }
+
         try {
             await addStaffToCafe({ 
                 staffName, 
@@ -50,14 +69,12 @@ const StaffTab = ({ cafes }) => {
                 pin, 
                 cafe_id: selectedCafe 
             });
-            // Clear the form fields on success
             setStaffName('');
             setMobileNo('');
             setPin('');
-            // Refresh the staff list to show the newly added member
             fetchStaff();
         } catch (err) {
-            setError(err.response.data.detail);
+            setError(err.response?.data?.detail || "Failed to add staff.");
             console.error(err);
         }
     };
@@ -112,4 +129,3 @@ const StaffTab = ({ cafes }) => {
 };
 
 export default StaffTab;
-

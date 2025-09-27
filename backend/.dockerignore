@@ -1,0 +1,23 @@
+Python virtual environment
+
+venv/
+pycache/
+*.pyc
+*.pyo
+*.pyd
+Environment files
+
+.env
+.env.*
+IDE and editor folders
+
+.vscode/
+.idea/
+Git folder
+
+.git/
+.gitignore
+Alembic versions (these are specific to your local DB states)
+In production, you run migrations from a clean state.
+Keeping this commented out in case you want to build versions into the image for some reason.
+alembic/versions/

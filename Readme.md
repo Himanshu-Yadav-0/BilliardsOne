@@ -130,3 +130,10 @@ npm run dev
 ```
 
 ---
+
+
+update Billiards one repo
+linkedin profile add project
+update resume
+add rsume in linkedin
+update portfolio
